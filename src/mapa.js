@@ -4,13 +4,6 @@ import { ElevationGeometry } from '../geometrias/elevationGeometry.js';
 import { materials } from './material.js';
 
 export function construirTerreno(width, height, textures) {
-	const a = new THREE.Mesh(
-		new THREE.PlaneGeometry(width, height, 350, 350),
-		new THREE.MeshPhongMaterial({ color: materials.pasto.color, side: THREE.DoubleSide })
-	);
-	a.rotation.set(Math.PI / 2, 0, 0);
-	return a;
-
 	const { tierra1, tierra2, pasto1, pasto2, arena, tierraCostaSeca, tierraCostaMojada, agua1, agua2, elevationMap } =
 		textures;
 
