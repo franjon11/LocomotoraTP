@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 
-import { ElevationGeometry } from '../geometrias/elevationGeometry.js';
+import { ElevationGeometry } from './geometrias/elevationGeometry.js';
 import { materials } from './material.js';
 
 export function construirTerreno(width, height, textures) {
