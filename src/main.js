@@ -20,6 +20,7 @@ const params = {
 	stop: false,
 	position: 0,
 	time: 0,
+	velocidad: 1,
 };
 
 const transiciones_camaras = {
@@ -81,7 +82,8 @@ function animate() {
 			clock.elapsedTime = params.time;
 		}
 		params.time = clock.getElapsedTime();
-		params.position = (params.time % 35) / 35;
+		const velocidad = 1 / params.velocidad;
+		params.position = (params.time % (35 * velocidad)) / (35 * velocidad);
 	}
 	sceneManager.animate(params);
 
@@ -108,7 +110,7 @@ function animate() {
 }
 
 function createMenu() {
-	const gui = new dat.GUI({ width: 100 });
+	const gui = new dat.GUI({ width: 200 });
 
 	gui.add(params, 'stop').name('Frenar');
 }
