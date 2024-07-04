@@ -205,7 +205,7 @@ function crearCilindroMediano() {
 }
 
 function crearSpotLight(isDaytime) {
-	const light = new THREE.SpotLight(0xffff00, isDaytime ? 0 : intensity, 40, Math.PI / 2);
+	const light = new THREE.SpotLight(0xffff00, isDaytime ? 0 : intensity, 40, Math.PI / 3);
 	light.penumbra = 0.3;
 	light.position.set(0, 0, 0);
 	light.target.position.set(0, -15, 0);
@@ -214,9 +214,15 @@ function crearSpotLight(isDaytime) {
 	light.shadow.mapSize.width = 1024;
 	light.shadow.mapSize.height = 1024;
 	light.shadow.camera.near = 0.1;
-	light.shadow.camera.far = 10;
-	light.decay = 1.5;
+	light.shadow.camera.far = 1000;
+	light.shadow.camera.fov = 30;
+	light.shadow.camera.aspect = 1;
+	light.shadow.camera.updateProjectionMatrix();
+	light.shadow.bias = -0.0001;
 	light.shadow.focus = 1;
+	light.shadow.needsUpdate = true;
+	light.penumbra = 0.3;
+	light.decay = 1.5;
 
 	return light;
 }
