@@ -4,8 +4,7 @@ import { ElevationGeometry } from './geometrias/elevationGeometry.js';
 import { materials } from './material.js';
 
 export function construirTerreno(width, height, textures) {
-	const { tierra1, tierra2, pasto1, pasto2, arena, tierraCostaSeca, tierraCostaMojada, agua1, agua2, elevationMap } =
-		textures;
+	const { tierra1, tierra2, pasto1, pasto2, arena, tierraCostaMojada, agua1, agua2, elevationMap } = textures;
 
 	// PASTO
 	const amplitude = 13;
@@ -13,7 +12,7 @@ export function construirTerreno(width, height, textures) {
 	const heightSegments = 350;
 	const geoTerreno = ElevationGeometry(width, height, amplitude, widthSegments, heightSegments, elevationMap.object);
 
-	const material = new THREE.RawShaderMaterial({
+	/* const material = new THREE.RawShaderMaterial({
 		uniforms: {
 			tierra1Sampler: { type: 't', value: tierra1.object },
 			tierra2Sampler: { type: 't', value: tierra2.object },
@@ -28,18 +27,46 @@ export function construirTerreno(width, height, textures) {
 		vertexShader: vertexShader,
 		fragmentShader: fragmentShader,
 		side: THREE.DoubleSide,
+	}); */
+
+	// phong material
+	const material = new THREE.MeshPhongMaterial({
+		side: THREE.FrontSide,
 	});
+	material.defines = { USE_UV: true };
 
-	const terreno = new THREE.Mesh(geoTerreno, material);
+	// Modificar los shaders del material Phong
+	material.onBeforeCompile = (shader) => {
+		// agregar las texturas
+		shader.uniforms.tierra1Sampler = { type: 't', value: tierra1.object };
+		shader.uniforms.tierra2Sampler = { type: 't', value: tierra2.object };
+		shader.uniforms.pasto1Sampler = { type: 't', value: pasto1.object };
+		shader.uniforms.pasto2Sampler = { type: 't', value: pasto2.object };
+		shader.uniforms.arenaSampler = { type: 't', value: arena.object };
+		shader.uniforms.tierraCostaMojadaSampler = { type: 't', value: tierraCostaMojada.object };
+		shader.uniforms.agua1Sampler = { type: 't', value: agua1.object };
+		shader.uniforms.agua2Sampler = { type: 't', value: agua2.object };
+		shader.uniforms.worldNormalMatrix = { value: null };
 
-	material.needsUpdate = true;
-	material.onBeforeRender = (renderer, scene, camera, geometry, mesh) => {
-		let m = mesh.matrixWorld.clone();
-		m = m.transpose().invert();
-		mesh.material.uniforms.worldNormalMatrix.value = m;
+		shader.vertexShader = shader.vertexShader.replace(
+			'vViewPosition = - mvPosition.xyz;',
+			`
+		vViewPosition = - mvPosition.xyz;
+		vWorldPos = (modelMatrix*vec4(transformed,1.0)).xyz;
+			`
+		);
+
+		shader.vertexShader =
+			`
+		varying vec3 vWorldPos;
+		` + shader.vertexShader;
+
+		shader.fragmentShader = declarationsFragmentShader + shader.fragmentShader;
+
+		shader.fragmentShader = shader.fragmentShader.replace('#include <map_fragment>', mainFragmentShader);
 	};
 
-	return terreno;
+	return new THREE.Mesh(geoTerreno, material);
 }
 
 export function construirAgua(width, height) {
@@ -51,60 +78,23 @@ export function construirAgua(width, height) {
 	return agua;
 }
 
-const vertexShader = `    
-    precision highp float;
+const declarationsFragmentShader = ` 
+			uniform sampler2D tierra1Sampler;
+			uniform sampler2D tierra2Sampler;
+			uniform sampler2D pasto1Sampler;
+			uniform sampler2D pasto2Sampler;
+			uniform sampler2D arenaSampler;
+			uniform sampler2D tierraCostaMojadaSampler;
+			uniform sampler2D agua1Sampler;
+			uniform sampler2D agua2Sampler;
 
-    // Atributos de los vértices
-    attribute vec3 position; 	
-    attribute vec3 normal; 	
-    attribute vec2 uv;		 	
+			varying vec3 vWorldPos;
+			
+			`;
 
-    // Uniforms
-    uniform mat4 modelMatrix;		// Matriz de transformación del objeto
-    uniform mat4 worldNormalMatrix;	// Matriz de normales
-    uniform mat4 viewMatrix;		// Matriz de transformación de la cámara
-    uniform mat4 projectionMatrix;	// Matriz de proyección de la cámara
-
-    // Varying
-    varying vec2 vUv;	    // Coordenadas de textura que se pasan al fragment shader
-    varying vec3 vNormal;	// Normal del vértice que se pasa al fragment shader
-    varying vec3 vWorldPos;	// Posición del vértice en el espacio  de mundo
-
-    void main() {
-        
-        // Lee la posición del vértice desde los atributos
-
-        vec3 pos = position;	
-
-        // Se calcula la posición final del vértice
-        // Se aplica la transformación del objeto, la de la cámara y la de proyección
-
-        gl_Position = projectionMatrix * viewMatrix * modelMatrix * vec4(pos, 1.0);
-
-        // Se pasan las coordenadas de textura al fragment shader
-        vUv = uv;
-        vNormal = normalize(vec3(worldNormalMatrix * vec4(normal, 0.0)));
-        vWorldPos = (modelMatrix * vec4(pos, 1.0)).xyz;
-    }
-`;
-
-const fragmentShader = `
-    precision mediump float;
-    varying vec2 vUv;
-    varying vec3 vNormal;
-    varying vec3 vWorldPos;
-
-	uniform sampler2D tierra1Sampler;
-	uniform sampler2D tierra2Sampler;
-	uniform sampler2D pasto1Sampler;
-	uniform sampler2D pasto2Sampler;
-	uniform sampler2D arenaSampler;
-	uniform sampler2D tierraCostaMojadaSampler;
-	uniform sampler2D agua1Sampler;
-	uniform sampler2D agua2Sampler;
-
-    void main(void) {
-        vec2 uv=vUv*8.0;
+const mainFragmentShader = `
+		// calculamos las coordenadas UV en base a las coordenadas de mundo
+		vec2 uv=vUv*5.0;
 
         vec3 tierra1=texture2D(tierra1Sampler,uv).xyz;
         vec3 tierra2=texture2D(tierra2Sampler,uv).xyz;
@@ -145,7 +135,5 @@ const fragmentShader = `
 		vec3 grassArenaPiedraRock=mix(piedritas,grassArenaRock,costa2Factor);
 		vec3 grassDirtRockWater=mix(agua,grassArenaPiedraRock,aguaFactor);
 
-        gl_FragColor = vec4(grassDirtRockWater,1.0);	
-        //gl_FragColor = vec4(vWorldPos.y,0.0,0.0,1.0);	
-    }
-    `;
+		diffuseColor = vec4(grassDirtRockWater,1.0);	
+`;
