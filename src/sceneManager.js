@@ -262,10 +262,6 @@ export class SceneManager {
 				obj.receiveShadow = true;
 				obj.castShadow = true;
 			}
-
-			if (obj.material) {
-				obj.material.needsUpdate = true;
-			}
 		});
 	}
 }

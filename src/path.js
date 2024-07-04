@@ -163,11 +163,13 @@ export class Path {
 	anchoDurmiente = 2;
 	altoDurmiente = 0.125;
 	crearFormaDurmientes() {
+		const peralte = 1 / 5;
+
 		this.formaDurmiente = new THREE.Shape();
 		this.formaDurmiente.moveTo(0, 0);
-		this.formaDurmiente.lineTo(this.anchoDurmiente, 0);
-		this.formaDurmiente.lineTo(this.anchoDurmiente, this.altoDurmiente);
-		this.formaDurmiente.lineTo(0, this.altoDurmiente);
+		this.formaDurmiente.lineTo(-this.anchoDurmiente, 0);
+		this.formaDurmiente.lineTo(-this.anchoDurmiente * (1 - peralte), -this.altoDurmiente * 1.5);
+		this.formaDurmiente.lineTo(-this.anchoDurmiente * peralte, -this.altoDurmiente * 1.5);
 		this.formaDurmiente.lineTo(0, 0);
 	}
 
@@ -223,7 +225,7 @@ export class Path {
 
 	//#region Superficies
 	crearDurmientes(textura, bump) {
-		const offset = { offsetX: -0.75, offsetY: -0.125 };
+		const offset = { offsetX: 1.25, offsetY: -0.125 };
 		let geometry = new ParametricGeometry(
 			(u, v, target) => this.getParametricPathFunction(u, v, target, this.formaDurmiente, this.path, offset),
 			50,
@@ -233,14 +235,14 @@ export class Path {
 		const material = new THREE.MeshPhongMaterial({ map: textura, bumpMap: bump });
 
 		material.map.repeat.set(2, this.path.getLength());
-		material.map.offset.set(1.1, 0);
+		material.map.offset.set(1.05, 0);
 
 		return new THREE.Mesh(geometry, material);
 	}
 
 	crearVias() {
-		const offsetDer = { offsetX: 0.6, offsetY: -(this.altoDurmiente + this.anchoVia) };
-		const offsetIzq = { offsetX: -0.4, offsetY: -(this.altoDurmiente + this.anchoVia) };
+		const offsetIzq = { offsetX: -0.2, offsetY: -(this.altoDurmiente * 2.25 + this.anchoVia) };
+		const offsetDer = { offsetX: 0.55, offsetY: -(this.altoDurmiente * 2.25 + this.anchoVia) };
 
 		let geometryDer = new ParametricGeometry(
 			(u, v, target) => this.getParametricPathFunction(u, v, target, this.formaVia, this.path, offsetDer),
