@@ -31,7 +31,8 @@ export class SceneManager {
 		agua1: { url: 'agua1.jpg', object: null },
 		agua2: { url: 'agua2.jpg', object: null },
 		elevationMap: { url: 'elevationMap222.png', object: null },
-		sky: { url: 'sky2.jpg', object: null },
+		skyDay: { url: 'sky2.jpg', object: null },
+		skyNight: { url: 'night.jpg', object: null },
 		durmientes: { url: 'durmientes.jpg', object: null },
 		durmientesBump: { url: 'durmientesBump.jpg', object: null },
 		paredLadrillo: { url: 'pared_ladrillo.jpg', object: null },
@@ -46,6 +47,10 @@ export class SceneManager {
 
 	directionalLight;
 	hemiLight;
+
+	sky = null;
+	daySkyMaterial = null;
+	nightSkyMaterial = null;
 
 	lights = [];
 
@@ -62,7 +67,7 @@ export class SceneManager {
 		this.container = new THREE.Group();
 
 		this.directionalLight = new THREE.DirectionalLight(0xeeeeff, 0.2);
-		this.directionalLight.position.set(-1, 2, 3);
+		this.directionalLight.position.set(-1, 4, 3);
 
 		this.container.add(this.directionalLight);
 
@@ -75,22 +80,13 @@ export class SceneManager {
 		const axes = new THREE.AxesHelper(100);
 		this.container.add(axes); */
 
-		this.updateDayNight(renderer, false);
+		this.updateDayNight(renderer, false, false);
 		this.loadTextures();
 	}
 
 	prepareScene() {
-		// cielo
-		const skyTexture = this.textures.sky.object;
-		skyTexture.wrapT = THREE.MirroredRepeatWrapping;
-		skyTexture.repeat.set(1, 2);
-		const skyMaterial = new THREE.MeshBasicMaterial({
-			map: skyTexture,
-			side: THREE.BackSide,
-		});
-		const sky = new THREE.Mesh(new THREE.SphereGeometry(500, 32, 32), skyMaterial);
-
-		this.container.add(sky);
+		this.crearYActualizarCielo();
+		this.container.add(this.sky);
 
 		// mapa
 		const mapa = construirTerreno(70, 70, this.textures);
@@ -119,6 +115,37 @@ export class SceneManager {
 		this.scene.add(this.container);
 
 		this.generarSombras();
+	}
+
+	crearYActualizarCielo() {
+		if (this.daySkyMaterial === null) {
+			const daySkyTexture = this.textures.skyDay.object;
+			daySkyTexture.wrapT = THREE.MirroredRepeatWrapping;
+			daySkyTexture.repeat.set(1, 2);
+			this.daySkyMaterial = new THREE.MeshBasicMaterial({
+				map: daySkyTexture,
+				side: THREE.BackSide,
+			});
+		}
+		if (this.nightSkyMaterial === null) {
+			const nightSkyTexture = this.textures.skyNight.object;
+			nightSkyTexture.wrapT = THREE.MirroredRepeatWrapping;
+			nightSkyTexture.repeat.set(1, 2);
+
+			this.nightSkyMaterial = new THREE.MeshBasicMaterial({
+				map: nightSkyTexture,
+				side: THREE.BackSide,
+			});
+		}
+
+		if (this.sky !== null) {
+			this.sky.material = this.isDaytime ? this.daySkyMaterial : this.nightSkyMaterial;
+		} else {
+			this.sky = new THREE.Mesh(
+				new THREE.SphereGeometry(500, 32, 32),
+				this.isDaytime ? this.daySkyMaterial : this.nightSkyMaterial
+			);
+		}
 	}
 
 	buildPath() {
@@ -239,7 +266,7 @@ export class SceneManager {
 		tunel.add(this.camaraTunel);
 	}
 
-	updateDayNight(renderer, changeDayTime = true) {
+	updateDayNight(renderer, changeDayTime = true, actualizaCielo = true) {
 		if (changeDayTime) this.isDaytime = !this.isDaytime;
 		const dayNight = this.isDaytime ? 0 : 1;
 
@@ -254,6 +281,8 @@ export class SceneManager {
 		});
 		this.directionalLight.intensity = 1.5 - dayNight;
 		this.hemiLight.intensity = 0.1 + (1 - dayNight) * 0.1;
+
+		if (actualizaCielo) this.crearYActualizarCielo();
 	}
 
 	generarSombras() {
