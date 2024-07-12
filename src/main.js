@@ -21,6 +21,9 @@ const params = {
 	position: 0,
 	time: 0,
 	velocidad: 1,
+	lightx: 4,
+	lighty: 5,
+	lightz: 4,
 };
 
 const transiciones_camaras = {
@@ -113,6 +116,10 @@ function createMenu() {
 	const gui = new dat.GUI({ width: 200 });
 
 	gui.add(params, 'stop').name('Frenar');
+	gui.add(params, 'velocidad').name('Velocidad').min(1).max(4).step(0.5);
+	gui.add(params, 'lightx').name('Luz Dir. X').min(-10).max(10).step(0.1);
+	gui.add(params, 'lighty').name('Luz Dir. Y').min(0).max(10).step(0.1);
+	gui.add(params, 'lightz').name('Luz Dir. Z').min(-10).max(10).step(0.1);
 }
 
 setupThreeJs();

@@ -5,6 +5,7 @@ const CANTIDAD_RUEDAS_POR_LADO = 3;
 
 export function construirLocomotora(isDaytime) {
 	const locomotora = new THREE.Group();
+	locomotora.name = 'locomotora';
 
 	const { base, ruedas, barras } = crearBase();
 	base.position.set(0, 0, 0);
@@ -303,6 +304,7 @@ function crearBase() {
 			grupo_rueda_barra.add(grupo_giro);
 
 			base.add(grupo_rueda_barra);
+
 			ruedas.push(grupo_giro);
 		}
 	}

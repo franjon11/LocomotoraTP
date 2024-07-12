@@ -55,7 +55,7 @@ export class Path {
 	//#region Position locomotora
 	getPositionLocomotora(u) {
 		let pos = this.path.getPointAt(u);
-		pos.y += 0.5 + this.anchoVia;
+		pos.y += 0.5 + this.anchoVia * 2.75;
 		let target = this.path.getPointAt((u + 0.01) % 1);
 		target.y += 2;
 		let tangente = new THREE.Vector3();
@@ -219,7 +219,6 @@ export class Path {
 			.lineTo(-radius, 0);
 
 		this.formaPuente.holes.push(ctx);
-		//this.formaPuente = ctx;
 	}
 	//#endregion
 
@@ -232,12 +231,17 @@ export class Path {
 			50
 		);
 
-		const material = new THREE.MeshPhongMaterial({ map: textura, bumpMap: bump });
+		const material = new THREE.MeshPhongMaterial({ map: textura, bumpMap: bump, name: 'durmientes' });
+
+		materials['durmientes'] = material;
 
 		material.map.repeat.set(2, this.path.getLength());
 		material.map.offset.set(1.05, 0);
 
-		return new THREE.Mesh(geometry, material);
+		let durmientes = new THREE.Mesh(geometry, material);
+		durmientes.name = 'durmientes';
+
+		return durmientes;
 	}
 
 	crearVias() {
@@ -258,14 +262,18 @@ export class Path {
 
 		const material = materials.via;
 
-		const viaDer = new THREE.Mesh(geometryDer, material);
-		const viaIzq = new THREE.Mesh(geometryIzq, material);
+		let viaDer = new THREE.Mesh(geometryDer, material);
+		viaDer.name = 'viaDer';
+
+		let viaIzq = new THREE.Mesh(geometryIzq, material);
+		viaIzq.name = 'viaIzq';
 
 		return { viaIzq, viaDer };
 	}
 
 	crearPuente(textura, normal) {
 		const puente = new THREE.Group();
+		puente.name = 'puente';
 
 		const extrudeSettings = {
 			steps: 10,
@@ -273,7 +281,15 @@ export class Path {
 			depth: this.profundidadPuente,
 			bevelThickness: 0.15,
 		};
-		const material = new THREE.MeshPhongMaterial({ map: textura, normalMap: normal, side: THREE.DoubleSide });
+		const material = new THREE.MeshPhongMaterial({
+			map: textura,
+			normalMap: normal,
+			side: THREE.DoubleSide,
+			name: 'puente',
+		});
+
+		materials['puente'] = material;
+
 		const geometry = new THREE.ExtrudeGeometry(this.formaPuente, extrudeSettings);
 		const puenteMain = new THREE.Mesh(geometry, material);
 
@@ -300,9 +316,18 @@ export class Path {
 		const shape = this.formaTunel;
 		const geometry = new THREE.ExtrudeGeometry(shape, extrudeSettings);
 
-		const material = new THREE.MeshPhongMaterial({ map: textura, normalMap: normal, side: THREE.DoubleSide });
-		const materialFace = new THREE.MeshPhongMaterial({ visible: false });
+		const material = new THREE.MeshPhongMaterial({
+			map: textura,
+			normalMap: normal,
+			side: THREE.DoubleSide,
+			name: 'tunel',
+		});
+		const materialFace = new THREE.MeshPhongMaterial({ visible: false, name: 'tunelFace' });
+
+		materials['tunel'] = [materialFace, material];
+
 		const tunel = new THREE.Mesh(geometry, [materialFace, material]);
+		tunel.name = 'tunel';
 
 		tunel.position.y = -0.5;
 		tunel.position.z = -this.anchoTunel;

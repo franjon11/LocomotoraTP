@@ -1,17 +1,13 @@
 import * as THREE from 'three';
-import { loadModels } from './loader.js';
-import { construirTerreno } from './mapa.js';
+import { construirTerreno, construirArboles } from './mapa.js';
 import { construirLocomotora, largo_barra, radio_rueda } from './locomotora.js';
 import { Path } from './path.js';
 import { materials } from './material.js';
 import * as BufferGeometryUtils from 'three/addons/utils/BufferGeometryUtils.js';
 
-const ADD_HELPERS = false;
-
-const modelPaths = [];
-
 export class SceneManager {
 	scene;
+	containerMerge;
 	container;
 
 	path;
@@ -39,6 +35,7 @@ export class SceneManager {
 		paredLadrilloNormal: { url: 'pared_ladrillo_normal.jpg', object: null },
 		paredMadera: { url: 'pared_madera.jpg', object: null },
 		paredMaderaNormal: { url: 'pared_madera_normal.jpg', object: null },
+		arbolesProhibidos: { url: 'arboles_prohibidos.png', object: null },
 	};
 
 	objetos = {};
@@ -61,6 +58,11 @@ export class SceneManager {
 	constructor(scene, renderer) {
 		this.scene = scene;
 
+		if (this.containerMerge) {
+			this.scene.remove(this.containerMerge);
+		}
+		this.containerMerge = new THREE.Group();
+
 		if (this.container) {
 			this.scene.remove(this.container);
 		}
@@ -74,10 +76,10 @@ export class SceneManager {
 		this.hemiLight = new THREE.HemisphereLight(0x8888dd, 0x080866, 0.2);
 		this.container.add(this.hemiLight);
 
-		/* 	const grid = new THREE.GridHelper(70, 70);
-		this.container.add(grid);
+		/* const grid = new THREE.GridHelper(70, 70);
+		this.container.add(grid); */
 
-		const axes = new THREE.AxesHelper(100);
+		/* const axes = new THREE.AxesHelper(100);
 		this.container.add(axes); */
 
 		this.updateDayNight(renderer, false, false);
@@ -90,9 +92,10 @@ export class SceneManager {
 
 		// mapa
 		const mapa = construirTerreno(70, 70, this.textures);
-		this.container.add(mapa);
+		this.containerMerge.add(mapa);
 
-		this.objetos['mapa'] = mapa;
+		const { troncos, copas } = construirArboles(70, 70, this.textures.arbolesProhibidos.object);
+		this.container.add(troncos, copas);
 
 		// construir el camino
 		this.buildPath();
@@ -115,6 +118,49 @@ export class SceneManager {
 		this.scene.add(this.container);
 
 		this.generarSombras();
+		this.mergeGeometries();
+	}
+
+	mergeGeometries() {
+		let geometries = {};
+		let meshes = [];
+		let lights_aux = [];
+
+		this.containerMerge.updateMatrixWorld(true, true);
+		this.containerMerge.traverse((obj) => {
+			if (obj.isMesh) {
+				meshes.push(obj);
+				let geometry = obj.geometry.index ? obj.geometry.toNonIndexed() : obj.geometry.clone();
+
+				let materialName = obj.material.name;
+				if (!geometries.hasOwnProperty(materialName)) {
+					geometries[materialName] = [];
+				}
+
+				geometry.applyMatrix4(obj.matrixWorld);
+				geometries[materialName].push(geometry);
+			}
+
+			if (obj.isLight) {
+				lights_aux.push(obj);
+			}
+		});
+
+		for (const [materialName, geometryList] of Object.entries(geometries)) {
+			let mergedGeometry = BufferGeometryUtils.mergeGeometries(geometryList, true);
+			mergedGeometry.applyMatrix4(this.containerMerge.matrix.clone().invert());
+			let mesh = new THREE.Mesh(mergedGeometry, materials[materialName]);
+			this.scene.add(mesh);
+		}
+
+		lights_aux.forEach((light, i) => {
+			let matrix = light.matrixWorld.clone();
+
+			let position = light.getWorldPosition(new THREE.Vector3());
+			if (light.parent) light.parent.remove(light);
+			light.position.copy(position);
+			this.scene.add(light);
+		});
 	}
 
 	crearYActualizarCielo() {
@@ -125,7 +171,9 @@ export class SceneManager {
 			this.daySkyMaterial = new THREE.MeshBasicMaterial({
 				map: daySkyTexture,
 				side: THREE.BackSide,
+				name: 'cielo_dia',
 			});
+			materials['cielo_dia'] = this.daySkyMaterial;
 		}
 		if (this.nightSkyMaterial === null) {
 			const nightSkyTexture = this.textures.skyNight.object;
@@ -135,7 +183,9 @@ export class SceneManager {
 			this.nightSkyMaterial = new THREE.MeshBasicMaterial({
 				map: nightSkyTexture,
 				side: THREE.BackSide,
+				name: 'cielo_noche',
 			});
+			materials['cielo_noche'] = this.nightSkyMaterial;
 		}
 
 		if (this.sky !== null) {
@@ -145,6 +195,7 @@ export class SceneManager {
 				new THREE.SphereGeometry(500, 32, 32),
 				this.isDaytime ? this.daySkyMaterial : this.nightSkyMaterial
 			);
+			this.sky.name = 'cielo';
 		}
 	}
 
@@ -159,17 +210,17 @@ export class SceneManager {
 			this.textures.durmientes.object,
 			this.textures.durmientesBump.object
 		);
-		this.container.add(durmientes);
+		this.containerMerge.add(durmientes);
 
 		const { viaIzq, viaDer } = this.path.crearVias();
-		this.container.add(viaIzq);
-		this.container.add(viaDer);
+		this.containerMerge.add(viaIzq);
+		this.containerMerge.add(viaDer);
 
 		const puente = this.path.crearPuente(
 			this.textures.paredLadrillo.object,
 			this.textures.paredLadrilloNormal.object
 		);
-		this.container.add(puente);
+		this.containerMerge.add(puente);
 
 		const tunel = this.path.crearTunel(this.textures.paredMadera.object, this.textures.paredMaderaNormal.object);
 		this.container.add(tunel);
