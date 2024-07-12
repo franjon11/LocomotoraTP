@@ -3,11 +3,11 @@ import { materials } from './material';
 
 const CANTIDAD_RUEDAS_POR_LADO = 3;
 
-export function construirLocomotora(isDaytime) {
+export function construirLocomotora(isDaytime, texturaRueda, alphaRueda) {
 	const locomotora = new THREE.Group();
 	locomotora.name = 'locomotora';
 
-	const { base, ruedas, barras } = crearBase();
+	const { base, ruedas, barras } = crearBase(texturaRueda, alphaRueda);
 	base.position.set(0, 0, 0);
 	locomotora.add(base);
 
@@ -271,13 +271,13 @@ function crearMotor(isDaytime) {
 const largo_base = 3;
 const alto_base = 0.2;
 const ancho_base = 1;
-function crearBase() {
+function crearBase(texturaRueda, alphaRueda) {
 	const base = new THREE.Mesh(new THREE.BoxGeometry(largo_base, alto_base, ancho_base), materials.barra);
 
 	const ruedas = [];
 	const barras = [];
 
-	const rueda_base = crearRueda();
+	const rueda_base = crearRueda(texturaRueda, alphaRueda);
 	const barra = crearBarra();
 
 	for (let j = 0; j < 2; j++) {
@@ -332,8 +332,21 @@ function crearBarra() {
 const gap_ruedas = 0.75;
 export const radio_rueda = 0.25;
 const ancho_rueda = 0.1;
-function crearRueda() {
-	return crearCilindro(ancho_rueda, radio_rueda, materials.rueda);
+function crearRueda(texturaRueda, alphaRueda) {
+	const material_rueda = new THREE.MeshPhongMaterial({
+		map: texturaRueda,
+		alphaMap: alphaRueda,
+		transparent: true,
+		side: THREE.FrontSide,
+	});
+	const material_rueda_back = new THREE.MeshPhongMaterial({ visible: false });
+
+	materials['rueda'] = material_rueda;
+	materials['rueda_back'] = material_rueda_back;
+
+	const materiales = [material_rueda_back, material_rueda, material_rueda];
+
+	return crearCilindro(ancho_rueda, radio_rueda, materiales);
 }
 
 //#endregion

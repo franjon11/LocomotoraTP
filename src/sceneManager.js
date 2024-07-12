@@ -36,6 +36,8 @@ export class SceneManager {
 		paredMadera: { url: 'pared_madera.jpg', object: null },
 		paredMaderaNormal: { url: 'pared_madera_normal.jpg', object: null },
 		arbolesProhibidos: { url: 'arboles_prohibidos.png', object: null },
+		rueda: { url: 'rueda.jpg', object: null },
+		alphaRueda: { url: 'alpha_rueda.png', object: null },
 	};
 
 	objetos = {};
@@ -101,7 +103,11 @@ export class SceneManager {
 		this.buildPath();
 
 		// construir la locomotora
-		const { locomotora, ruedas, barras, parabrisas, luzLocomotora } = construirLocomotora(this.isDaytime);
+		const { locomotora, ruedas, barras, parabrisas, luzLocomotora } = construirLocomotora(
+			this.isDaytime,
+			this.textures.rueda.object,
+			this.textures.alphaRueda.object
+		);
 		this.lights.push(luzLocomotora);
 
 		this.container.add(locomotora);
