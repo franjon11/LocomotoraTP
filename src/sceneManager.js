@@ -14,7 +14,7 @@ export class SceneManager {
 
 	camaraLocomotoraDel;
 	camaraLocomotoraTras;
-	//camaraPuente;
+	camaraPuente;
 	camaraTunel;
 
 	textures = {
@@ -222,7 +222,7 @@ export class SceneManager {
 		this.containerMerge.add(viaIzq);
 		this.containerMerge.add(viaDer);
 
-		const puente = this.path.crearPuente(
+		const { puente, fierros } = this.path.crearPuente(
 			this.textures.paredLadrillo.object,
 			this.textures.paredLadrilloNormal.object
 		);
@@ -232,7 +232,7 @@ export class SceneManager {
 		this.container.add(tunel);
 
 		this.objetos['tunel'] = tunel;
-		this.objetos['puente'] = puente;
+		this.objetos['puente'] = fierros;
 	}
 
 	onResize(aspect) {
@@ -244,6 +244,9 @@ export class SceneManager {
 
 		this.camaraTunel.aspect = aspect;
 		this.camaraTunel.updateProjectionMatrix();
+
+		this.camaraPuente.aspect = aspect;
+		this.camaraPuente.updateProjectionMatrix();
 	}
 
 	animate(params) {
@@ -305,6 +308,7 @@ export class SceneManager {
 	generarCamaras() {
 		const parabrisas = this.objetos.parabrisas;
 		const tunel = this.objetos.tunel;
+		const puente = this.objetos.puente;
 
 		this.camaraLocomotoraDel = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 10000);
 		this.camaraLocomotoraDel.position.set(0.5, 1, -0.5);
@@ -319,8 +323,12 @@ export class SceneManager {
 		this.camaraTunel = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 10000);
 		this.camaraTunel.position.set(-20, 3, -8);
 		this.camaraTunel.lookAt(0, 0, -9);
-
 		tunel.add(this.camaraTunel);
+
+		this.camaraPuente = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 10000);
+		this.camaraPuente.position.set(10, 3.5, 0.5);
+		this.camaraPuente.lookAt(0, 0, 1);
+		puente.add(this.camaraPuente);
 	}
 
 	updateDayNight(renderer, changeDayTime = true, actualizaCielo = true) {

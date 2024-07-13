@@ -20,4 +20,11 @@ export const materials = {
 		side: THREE.DoubleSide,
 		transparent: true,
 	}),
+
+	fierro_puente: new THREE.MeshPhongMaterial({
+		color: 0x999999,
+		shininess: 100,
+		name: 'fierro_puente',
+		specular: 0x8c8c8c,
+	}),
 };

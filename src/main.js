@@ -13,6 +13,7 @@ const camaras = {
 	LOCOMOTORA_DELANTERA: 'locomotora_delantera',
 	LOCOMOTORA_TRASERA: 'locomotora_trasera',
 	TUNEL: 'tunel',
+	PUENTE: 'puente',
 };
 
 const params = {
@@ -30,7 +31,8 @@ const transiciones_camaras = {
 	[camaras.GENERAL]: camaras.LOCOMOTORA_DELANTERA,
 	[camaras.LOCOMOTORA_DELANTERA]: camaras.LOCOMOTORA_TRASERA,
 	[camaras.LOCOMOTORA_TRASERA]: camaras.TUNEL,
-	[camaras.TUNEL]: camaras.GENERAL,
+	[camaras.TUNEL]: camaras.PUENTE,
+	[camaras.PUENTE]: camaras.GENERAL,
 };
 
 // setup
@@ -48,7 +50,7 @@ function setupThreeJs() {
 	container.appendChild(renderer.domElement);
 
 	camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-	camera.position.set(-2, 2, 2);
+	camera.position.set(-20, 20, 40);
 	camera.lookAt(0, 0, 0);
 
 	const controls = new OrbitControls(camera, renderer.domElement);
@@ -103,6 +105,9 @@ function animate() {
 			break;
 		case camaras.TUNEL:
 			cam = sceneManager.camaraTunel;
+			break;
+		case camaras.PUENTE:
+			cam = sceneManager.camaraPuente;
 			break;
 		default:
 			cam = camera;

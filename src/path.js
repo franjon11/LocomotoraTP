@@ -303,7 +303,80 @@ export class Path {
 		const initialPos = this.pathPuente.getPointAt(0);
 		puente.position.set(initialPos.x, -this.altoPuente, initialPos.z - this.anchoVia * 4);
 
-		return puente;
+		// agregar fierros por encima del puente donde estos fierros formen triangulos, a ambos costados del puente y en el techo por la cantidad de arcos
+		const fierros = this.crearFierrosPuente();
+		puente.add(fierros);
+
+		return { puente, fierros };
+	}
+
+	anchoFierro = 0.1;
+	altoFierro = 4;
+	cantPanelesFierro = 4;
+	crearFierrosPuente() {
+		const fierros = new THREE.Group();
+		fierros.position.set(0, this.altoPuente, -this.profundidadPuente / 2 + 0.7);
+
+		const fierrosTecho = new THREE.Group();
+		const fierrosCostadoIzq = new THREE.Group();
+		const fierrosCostadoDer = new THREE.Group();
+
+		const panelFierroParado = this.crearPanelFierros();
+
+		const panelFierroAcostado = panelFierroParado.clone();
+		panelFierroAcostado.scale.set(1, 0.75, 0.75);
+		panelFierroAcostado.rotateX(Math.PI / 2);
+
+		for (let i = 0; i < this.cantPanelesFierro; i++) {
+			const panelTecho = panelFierroAcostado.clone();
+			panelTecho.position.set(this.altoFierro * i, this.altoFierro, 0);
+			fierrosTecho.add(panelTecho);
+
+			const panelIzq = panelFierroParado.clone();
+			panelIzq.position.set(this.altoFierro * i, 0, this.profundidadPuente);
+			fierrosCostadoIzq.add(panelIzq);
+
+			const panelDer = panelFierroParado.clone();
+			panelDer.position.set(this.altoFierro * i, 0, 0);
+			fierrosCostadoDer.add(panelDer);
+		}
+		fierros.add(fierrosTecho);
+		fierros.add(fierrosCostadoIzq);
+		fierros.add(fierrosCostadoDer);
+
+		return fierros;
+	}
+
+	crearPanelFierros() {
+		const panelFierro = new THREE.Group();
+
+		const geometryFierro = new THREE.BoxGeometry(this.anchoFierro, this.altoFierro, this.anchoFierro);
+		const fierroParado = new THREE.Mesh(geometryFierro, materials.fierro_puente);
+		fierroParado.position.set(0, this.altoFierro / 2, 0);
+
+		const fierroDiagonal = fierroParado.clone();
+		fierroDiagonal.scale.set(1, 1.4, 1);
+		fierroDiagonal.position.set(this.altoFierro / 2, this.altoFierro / 2, 0);
+		fierroDiagonal.rotateZ(Math.PI / 4);
+
+		const fierroAcostado = fierroParado.clone();
+		fierroAcostado.position.set(this.altoFierro / 2, this.altoFierro, 0);
+		fierroAcostado.rotateZ(Math.PI / 2);
+
+		const fierro1 = fierroParado.clone();
+		fierro1.position.x = this.altoFierro;
+
+		const fierro2 = fierroAcostado.clone();
+		fierro2.position.y = this.anchoFierro;
+
+		panelFierro.add(fierro1);
+		panelFierro.add(fierro2);
+
+		panelFierro.add(fierroAcostado);
+		panelFierro.add(fierroDiagonal);
+		panelFierro.add(fierroParado);
+
+		return panelFierro;
 	}
 
 	crearTunel(textura, normal) {
