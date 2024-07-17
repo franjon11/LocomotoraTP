@@ -55,7 +55,7 @@ export class Path {
 	//#region Position locomotora
 	getPositionLocomotora(u) {
 		let pos = this.path.getPointAt(u);
-		pos.y += 0.5 + this.anchoVia * 2.75;
+		pos.y += 0.25 + this.anchoVia * 2.75;
 		let target = this.path.getPointAt((u + 0.01) % 1);
 		target.y += 2;
 		let tangente = new THREE.Vector3();

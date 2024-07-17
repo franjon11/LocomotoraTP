@@ -5,7 +5,7 @@ import * as dat from 'dat.gui';
 
 import { SceneManager } from './sceneManager.js';
 
-let scene, renderer, container, sceneManager, raycaster;
+let scene, renderer, container, sceneManager, raycaster_floor, raycaster_delante;
 
 let camera, cameraFirstPerson;
 let controls;
@@ -13,11 +13,11 @@ let controls;
 let muestra_camara;
 
 let objetos = [];
+let terreno = null;
 let moveForward = false;
 let moveBackward = false;
 let moveLeft = false;
 let moveRight = false;
-let canJump = false;
 let velocity = new THREE.Vector3();
 let direction = new THREE.Vector3();
 let prevTime = performance.now();
@@ -82,7 +82,7 @@ function setupThreeJs() {
 	camera.lookAt(0, 0, 0);
 
 	cameraFirstPerson = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-	cameraFirstPerson.position.set(0, 10, 0);
+	cameraFirstPerson.position.set(0, 1, 0);
 
 	pointerControls();
 
@@ -92,11 +92,13 @@ function setupThreeJs() {
 	window.addEventListener('keyup', onKeyUp);
 	window.addEventListener('keydown', onKeyDown);
 
-	raycaster = new THREE.Raycaster(new THREE.Vector3(), new THREE.Vector3(0, -1, 0), 0, 10);
+	raycaster_floor = new THREE.Raycaster(new THREE.Vector3(), new THREE.Vector3(0, -1, 0), 0, 2.5);
+	raycaster_delante = new THREE.Raycaster(new THREE.Vector3(), new THREE.Vector3(0, 1, 0), 0, 4);
 }
 
 function pointerControls() {
 	controls = new PointerLockControls(cameraFirstPerson, renderer.domElement);
+	controls.getObject().position.set(0, 1, 0);
 
 	const blocker = document.getElementById('blocker');
 	const instructions = document.getElementById('instructions');
@@ -155,10 +157,6 @@ function onKeyDown(event) {
 			case 'ArrowRight':
 				moveRight = true;
 				break;
-			case 'Space':
-				if (canJump === true) velocity.y += 100;
-				canJump = false;
-				break;
 		}
 	}
 }
@@ -177,22 +175,23 @@ function onResize() {
 
 function animateFirstPerson() {
 	objetos = objetos.length === 0 ? sceneManager.collidableObjects : objetos;
-	console.log(objetos);
+	terreno = terreno === null ? sceneManager.objetos['mapa'] : terreno;
+
 	const time = performance.now();
-	if (controls.isLocked === true) {
-		raycaster.ray.origin.copy(controls.getObject().position);
-		raycaster.ray.origin.y -= 780;
+	if (controls.isLocked) {
+		raycaster_floor.ray.origin.copy(controls.getObject().position);
+		raycaster_delante.ray.origin.copy(controls.getObject().position);
 
-		const intersections = raycaster.intersectObjects(objetos, false);
+		const intersections_floor = raycaster_floor.intersectObjects(objetos, false);
+		const intersections_delante = raycaster_delante.intersectObjects(objetos, false);
 
-		const onObject = intersections.length > 0;
+		const chocaPiso = intersections_floor.length > 0;
+		const chocaObj = intersections_delante.length > 0;
 
 		const delta = (time - prevTime) / 1000;
 
 		velocity.x -= velocity.x * 30.0 * delta;
 		velocity.z -= velocity.z * 30.0 * delta;
-
-		velocity.y -= 9.8 * 100.0 * delta; // 100.0 = mass
 
 		direction.z = Number(moveForward) - Number(moveBackward);
 		direction.x = Number(moveRight) - Number(moveLeft);
@@ -201,21 +200,33 @@ function animateFirstPerson() {
 		if (moveForward || moveBackward) velocity.z -= direction.z * 400.0 * delta;
 		if (moveLeft || moveRight) velocity.x -= direction.x * 400.0 * delta;
 
-		if (onObject === true) {
-			velocity.y = Math.max(0, velocity.y);
-			canJump = true;
+		if (chocaPiso) {
+			controls.getObject().position.y = intersections_floor[0].point.y + 1;
+		}
+
+		if (chocaObj) {
+			velocity.z = Math.max(velocity.z, 0);
+			velocity.x = Math.max(velocity.x, 0);
 		}
 
 		controls.moveRight(-velocity.x * delta);
 		controls.moveForward(-velocity.z * delta);
 
-		controls.getObject().position.y += velocity.y * delta;
+		// si en x y z se va de los límites del terreno, se pone en el limite
+		const pos_x = controls.getObject().position.x;
 
-		if (controls.getObject().position.y < 0) {
-			velocity.y = 0;
-			controls.getObject().position.y = 0;
-
-			canJump = true;
+		if (pos_x < -35) {
+			controls.getObject().position.x = -35;
+		}
+		if (pos_x > 35) {
+			controls.getObject().position.x = 35;
+		}
+		const pos_z = controls.getObject().position.z;
+		if (pos_z < -35) {
+			controls.getObject().position.z = -35;
+		}
+		if (pos_z > 35) {
+			controls.getObject().position.z = 35;
 		}
 	}
 	prevTime = time;

@@ -96,12 +96,15 @@ export class SceneManager {
 
 		// mapa
 		const mapa = construirTerreno(70, 70, this.textures);
+		this.objetos['mapa'] = mapa;
 		this.containerMerge.add(mapa);
+		//this.collidableObjects.push(mapa);
 
 		const { troncos, copas } = construirArboles(70, 70, this.textures.arbolesProhibidos.object);
 		this.container.add(troncos, copas);
 
 		this.collidableObjects.push(troncos);
+		this.collidableObjects.push(copas);
 
 		// construir el camino
 		this.buildPath();
@@ -121,7 +124,6 @@ export class SceneManager {
 		this.objetos['ruedas'] = ruedas;
 		this.objetos['barras'] = barras;
 
-		this.collidableObjects.push(mapa);
 		this.collidableObjects.push(locomotora);
 
 		this.ready = true;
@@ -164,6 +166,8 @@ export class SceneManager {
 			mergedGeometry.applyMatrix4(this.containerMerge.matrix.clone().invert());
 			let mesh = new THREE.Mesh(mergedGeometry, materials[materialName]);
 			this.scene.add(mesh);
+
+			this.collidableObjects.push(mesh);
 		}
 
 		lights_aux.forEach((light, i) => {
