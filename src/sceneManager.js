@@ -42,6 +42,8 @@ export class SceneManager {
 
 	objetos = {};
 
+	collidableObjects = [];
+
 	ready = false;
 
 	directionalLight;
@@ -99,6 +101,8 @@ export class SceneManager {
 		const { troncos, copas } = construirArboles(70, 70, this.textures.arbolesProhibidos.object);
 		this.container.add(troncos, copas);
 
+		this.collidableObjects.push(troncos);
+
 		// construir el camino
 		this.buildPath();
 
@@ -116,6 +120,9 @@ export class SceneManager {
 		this.objetos['parabrisas'] = parabrisas;
 		this.objetos['ruedas'] = ruedas;
 		this.objetos['barras'] = barras;
+
+		this.collidableObjects.push(mapa);
+		this.collidableObjects.push(locomotora);
 
 		this.ready = true;
 
@@ -233,6 +240,9 @@ export class SceneManager {
 
 		this.objetos['tunel'] = tunel;
 		this.objetos['puente'] = fierros;
+
+		this.collidableObjects.push(tunel);
+		this.collidableObjects.push(fierros);
 	}
 
 	onResize(aspect) {

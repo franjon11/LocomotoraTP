@@ -224,7 +224,7 @@ export class Path {
 
 	//#region Superficies
 	crearDurmientes(textura, bump) {
-		const offset = { offsetX: 1.25, offsetY: -0.125 };
+		const offset = { offsetX: 1.25, offsetY: 0.125 };
 		let geometry = new ParametricGeometry(
 			(u, v, target) => this.getParametricPathFunction(u, v, target, this.formaDurmiente, this.path, offset),
 			50,
@@ -245,8 +245,8 @@ export class Path {
 	}
 
 	crearVias() {
-		const offsetIzq = { offsetX: -0.2, offsetY: -(this.altoDurmiente * 2.25 + this.anchoVia) };
-		const offsetDer = { offsetX: 0.55, offsetY: -(this.altoDurmiente * 2.25 + this.anchoVia) };
+		const offsetIzq = { offsetX: -0.2, offsetY: -(this.altoDurmiente + this.anchoVia / 3) };
+		const offsetDer = { offsetX: 0.55, offsetY: -(this.altoDurmiente + this.anchoVia / 3) };
 
 		let geometryDer = new ParametricGeometry(
 			(u, v, target) => this.getParametricPathFunction(u, v, target, this.formaVia, this.path, offsetDer),
